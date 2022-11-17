@@ -2,7 +2,7 @@ import sys
 from substitution import *
 from affine import *
 from affine_recurrent import *
-
+from rot import *
 
 def help():
     print("""
@@ -11,8 +11,9 @@ def help():
     [+] -t || --type                    Cipher type. Use the option number after this argument
         Available ciphers are:
             (1) Simple Substitution
-            (2) Affine
-            (3) Recurrent Affine
+            (2) Caesar (ROT) cipher
+            (3) Affine
+            (4) Recurrent Affine
     [+] -s || --string                  String to decode/encode
     [+] -f || --file                    File from which the program reads contents
     [+] -e || --encode                  Use this flag to encode a string/file contents
@@ -42,11 +43,15 @@ def main():
         print("Problems with args")
         return 0
     
+    if "-h" in sys.argv or "--help" in sys.argv:
+        help()
+        return 0
+    
     if "-t" in sys.argv:
         type_index = sys.argv.index("-t")
     elif "--type" in sys.argv:
         type_index = sys.argv.index("--type")
-    type_cipher = sys.argv[type_index + 1]
+    type_cipher = int(sys.argv[type_index + 1])
 
     if "-e" in sys.argv or "--encode" in sys.argv:
         algo_cipher = "enc"
@@ -54,13 +59,13 @@ def main():
         algo_cipher = "dec"
     
     if "-s" in sys.argv:
-        source_string = sys.argv[sys.argv.index("-s") + 1]
+        source_string = [sys.argv[sys.argv.index("-s") + 1], 1]
     elif "--string" in sys.argv:
-        source_string = sys.argv[sys.argv.index("--string") + 1]
+        source_string = [sys.argv[sys.argv.index("--string") + 1], 1]
     elif "-f" in sys.argv:
-        source_string = sys.argv[sys.argv.index("-f") + 1]
+        source_string = [sys.argv[sys.argv.index("-f") + 1], 0]
     elif "--file" in sys.argv:
-        source_string = sys.argv[sys.argv.index("--file") + 1]
+        source_string = [sys.argv[sys.argv.index("--file") + 1], 0]
 
     outfile = 0
     if "-o" in sys.argv:
@@ -71,8 +76,10 @@ def main():
     if type_cipher == 1:
         substitution(algo=algo_cipher, outfile=outfile, source_string=source_string)
     elif type_cipher == 2:
-        affine(algo=algo_cipher, outfile=outfile, source_string=source_string)
+        rot(algo=algo_cipher, outfile=outfile, source_string=source_string)
     elif type_cipher == 3:
+        affine(algo=algo_cipher, outfile=outfile, source_string=source_string)
+    elif type_cipher == 4:
         affine_recurrent(algo=algo_cipher, outfile=outfile, source_string=source_string)
     else:
         print("Incorrect cipher chosen")
@@ -96,5 +103,4 @@ if __name__ == "__main__":
                                                                 \______/ \__|                         
     """
     print(banner)
-    help()
     main()
