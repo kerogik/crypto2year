@@ -3,17 +3,19 @@ from substitution import *
 from affine import *
 from affine_recurrent import *
 from rot import *
+from cryptoanalysis import *
 
 def help():
     print("""
     Options:
     [+] -h || --help                    Display help
     [+] -t || --type                    Cipher type. Use the option number after this argument
-        Available ciphers are:
+        Available options are:
             (1) Simple Substitution
             (2) Caesar (ROT) cipher
             (3) Affine
             (4) Recurrent Affine
+            (5) Cryptanalysis
     [+] -s || --string                  String to decode/encode
     [+] -f || --file                    File from which the program reads contents
     [+] -e || --encode                  Use this flag to encode a string/file contents
@@ -26,8 +28,13 @@ def check_args():
     if not ("-t" in sys.argv or "--type" in sys.argv):
         print("You must specify cipher type!")
         return -1
-    if not ("-e" in sys.argv or "-d" in sys.argv or "--encode" in sys.argv or "--decode" in sys.argv):
-        print("You must specify whether you want to decode or encode something!")
+    if "-t" in sys.argv:
+        type_index = sys.argv.index("-t")
+    elif "--type" in sys.argv:
+        type_index = sys.argv.index("--type")
+    if not (int(sys.argv[type_index + 1])):
+        if not ("-e" in sys.argv or "-d" in sys.argv or "--encode" in sys.argv or "--decode" in sys.argv):
+            print("You must specify whether you want to decode or encode something!")
         return -1
     if not ("-f" in sys.argv or "--file" in sys.argv or "-s" in sys.argv or "--string" in sys.argv):
         print("You must specify a source string or source file!")
@@ -81,6 +88,11 @@ def main():
         affine(algo=algo_cipher, outfile=outfile, source_string=source_string)
     elif type_cipher == 4:
         affine_recurrent(algo=algo_cipher, outfile=outfile, source_string=source_string)
+    elif type_cipher == 5:
+        if not ("-f" in sys.argv or "--file" in sys.argv):
+            print("Cryptanalysis doesn't support loading ciphertext as a string, please provide a file with it")
+            return 0
+        cryptanalysis(outfile=outfile, infile_name=source_string)
     else:
         print("Incorrect cipher chosen")
         return 0
