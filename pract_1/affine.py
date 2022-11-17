@@ -103,12 +103,6 @@ def decrypt_ring(source_string, outfile):
     return 0
 
 
-def count_unique_symbols(s):
-    s = re.sub(r'[^a-zA-Z]',"",s)
-    s = sorted(list(set(s)))
-    return s,len(s)
-
-
 def is_coprime(a, b):
     return math.gcd(a,b) == 1
 
