@@ -117,7 +117,6 @@ def rev_broad_euclidean(a, b):
         r = a % b
         x = x2 - q*x1
         y = y2- q*y1
-
         a = b
         b = r
         x2 = x1
