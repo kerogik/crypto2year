@@ -38,7 +38,7 @@ def decrypt(source_string, outfile):
             source_string = fl.read()
     source_string = source_string.lower()
 
-    rot_number = int(input("Enter number by which you want your string was rotated\n"))
+    rot_number = int(input("Enter number by which you want your string was rotated\n- "))
     out_string = ''.join([source_string[i] if not re.match(r'[a-zA-Z]', source_string[i]) else chr((ord(source_string[i]) - 97 - rot_number) % 26 + 97) for i in range(len(source_string))])
 
     if outfile != 0:
