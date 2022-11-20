@@ -15,7 +15,7 @@ def help():
             (2) Caesar (ROT) cipher
             (3) Affine
             (4) Recurrent Affine
-            (5) Cryptanalysis
+            (5) Cryptanalysis           Conduct cryptoanalysis if available ciphers. -f option is required 
     [+] -s || --string                  String to decode/encode
     [+] -f || --file                    File from which the program reads contents
     [+] -e || --encode                  Use this flag to encode a string/file contents

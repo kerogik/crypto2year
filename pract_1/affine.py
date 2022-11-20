@@ -1,5 +1,6 @@
 import regex as re
 import math
+import galois
 
 def affine(algo, outfile, source_string):
     field_or_ring = int(input("Choose whether you want to encode/decode something over residue class ring (1) or Galois field (2)\n- "))
@@ -10,17 +11,17 @@ def affine(algo, outfile, source_string):
         if field_or_ring == 1:
             encrypt_ring(source_string, outfile)
         else:
-            pass
+            encrypt_galois(source_string, outfile)
     elif algo == "dec":
         if field_or_ring == 1:
             decrypt_ring(source_string, outfile)
         else:
-            pass
+            decrypt_galois(source_string, outfile)
     return 0
 
 
 def encrypt_ring(source_string, outfile):
-    
+
     if source_string[1] == 1:
         source_string = source_string[0]
     else:
@@ -100,6 +101,101 @@ def decrypt_ring(source_string, outfile):
     else:
         print(out_string)
     
+    return 0
+
+
+def encrypt_galois(source_string, outfile):
+
+    if source_string[1] == 1:
+        source_string = source_string[0]
+    else:
+        with open(source_string[0], 'r') as fl:
+            source_string = fl.read()
+    source_string = source_string.lower()
+    
+    print("Wait while the program generates the Galois field...\n")
+    irreducible_poly = galois.irreducible_poly(3,3)
+    GF = galois.GF(3**3,irreducible_poly)
+    print(f"The program conducts arithmetics over Galua field 3**3, with the irreducible polynomial {irreducible_poly}\n")
+    alphabet = [chr(i) for i in range(97,123)]
+    alphabet.append(' ')
+    alphabet_dict = dict(zip(alphabet, [i for i in range(27)]))
+
+    alpha = int(input("Pick alpha that belongs to Galois field 3**3\n- "))
+    if alpha == 0:
+        print("That is not an appropriate alpha")
+        return 0
+    
+    beta = int(input("Pick beta that belongs to Galois field 3**3\n- "))
+    
+    alpha = GF(alpha)
+    beta = GF(beta)
+    
+    out_string = ''
+    for i in range(len(source_string)):
+        if not re.match(r'[a-zA-Z ]', source_string[i]):
+            out_string += source_string[i]
+        else:
+            ltrnum = alphabet_dict[source_string[i]]
+            ltrnum = GF(ltrnum)
+            k = int(alpha*(ltrnum) + beta)
+            new_letter = alphabet[k]
+            out_string += new_letter
+
+    if outfile != 0:
+        with open(outfile, 'w') as outfile:
+            outfile.write(out_string)
+    else:
+        print(out_string)
+
+    return 0
+
+
+def decrypt_galois(source_string, outfile):
+    
+    if source_string[1] == 1:
+        source_string = source_string[0]
+    else:
+        with open(source_string[0], 'r') as fl:
+            source_string = fl.read()
+    source_string = source_string.lower()
+    
+    print("Wait while the program generates the Galois field...\n")
+    irreducible_poly = galois.irreducible_poly(3,3)
+    GF = galois.GF(3**3,irreducible_poly)
+    print(f"The program conducts arithmetics over Galua field 3**3, with the irreducible polynomial {irreducible_poly}\n")
+
+    alphabet = [chr(i) for i in range(97,123)]
+    alphabet.append(' ')
+    alphabet_dict = dict(zip(alphabet, [i for i in range(27)]))
+
+    alpha = int(input("Pick alpha that belongs to Galois field 3**3\n- "))
+    if alpha == 0:
+        print("That is not an appropriate alpha")
+        return 0
+    
+    beta = int(input("Pick beta that belongs to Galois field 3**3\n- "))
+ 
+    beta = GF(beta)
+    alpha = GF(alpha)
+
+    out_string = ''
+    for i in range(len(source_string)):
+        if not re.match(r'[a-zA-Z ]', source_string[i]):
+            out_string += source_string[i]
+        else:
+            ltrnum = alphabet_dict[source_string[i]]
+            ltrnum = GF(ltrnum)
+            k = int((ltrnum - beta)/alpha)
+            new_letter = alphabet[k]
+            out_string += new_letter
+
+    if outfile != 0:
+        with open(outfile, 'w') as outfile:
+            outfile.write(out_string)
+    else:
+        print(out_string)
+
     return 0
 
 
