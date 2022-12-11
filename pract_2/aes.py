@@ -16,7 +16,7 @@ def encrypt(source_string, key_string, outfile):
     else:
         with open(source_string[0], 'rb') as fl:
             source_string = fl.read()
-    print(source_string)
+    #print(source_string)
     if key_string[1] == 1:
         key_string = key_string[0]
     else:
@@ -27,8 +27,6 @@ def encrypt(source_string, key_string, outfile):
     source_string = binascii.hexlify(source_string)
     blocks = [int((source_string[32*i:32*i+32]), 16) for i in range(len(source_string)//32+1)]
     
-    #print([hex(i) for i in blocks])
-    
     blocks[-1] = hex(blocks[-1])
     len_last = len(blocks[-1])
     cnt = 0
@@ -36,13 +34,15 @@ def encrypt(source_string, key_string, outfile):
     while len_last < 34:
         blocks[-1] += '0'
         cnt += 1
-        print(cnt)
         len_last = len(blocks[-1])
-        print(len_last, blocks[-1])
     blocks[-1] = int(blocks[-1], 16)
-    print(hex(blocks[-1]))
     blocks.append(cnt)
-    print(blocks)
+    
+    ###test###
+    #blocks = [0x00112233445566778899aabbccddeeff]
+    #key_string = 0x000102030405060708090a0b0c0d0e0f
+    ###test###
+
     NUMROUNDS = 10
     roundKeys = []
     blocks_ans = []
@@ -51,30 +51,30 @@ def encrypt(source_string, key_string, outfile):
 
     for block in blocks:
         #1 round
-        #print(hex(roundKeys[0]), hex(block))
+        print(hex(roundKeys[0]), hex(block))
         block = addRoundKey(roundKeys[0],block)
-        #print(hex(block))
+        print(hex(block))
         #rounds 2-9
         for i in range(1, NUMROUNDS):
-            #print(hex(block))
+            print(hex(block))
             block = subBytes(block)
-            #print(hex(block))
+            print(hex(block))
             block = shiftRows(block)
-            #print(hex(block))
+            print(hex(block))
             block = mixColumns(block)
-            #print(hex(block))
+            print(hex(block))
             block = addRoundKey(roundKeys[i],block)
-            #print(hex(block))
+            print(hex(block))
         #last round
         block = subBytes(block)
-        #print(hex(block))
+        print(hex(block))
         block = shiftRows(block)
-        #print(hex(block))
+        print(hex(block))
         ##adjusting bytes
         block = adjust_last_round(block)
-        #print(hex(block))
+        print(hex(block))
         block = addRoundKey(roundKeys[NUMROUNDS], block)
-        #print(hex(block))
+        print(hex(block))
         blocks_ans.append(block)
     
     print([hex(i) for i in blocks_ans])
@@ -84,33 +84,6 @@ def encrypt(source_string, key_string, outfile):
         with open(outfile, 'wb') as outfile:
             for i in blocks_ans:
                 outfile.write(i.to_bytes(16, 'big'))
-    else:
-        print(out_string)
-
-    return 0
-
-
-def decrypt(source_string, key_string, outfile):
-
-    if source_string[1] == 1:
-        source_string = source_string[0]
-    else:
-        with open(source_string[0], 'r') as fl:
-            source_string = fl.read()
-    
-    if key_string[1] == 1:
-        key_string = key_string[0]
-    else:
-        with open(key_string[0], 'r') as fl:
-            key_string = fl.read()
-
-    #
-    out_string = ''
-    #
-
-    if outfile != 0:
-        with open(outfile, 'w') as outfile:
-            outfile.write(out_string)
     else:
         print(out_string)
 
@@ -205,6 +178,7 @@ def shiftRows(block):
 
 
 def mixColumns(block):
+    print('this ',hex(block))
     words = []
     reswords = []
     for i in range(0,4):
@@ -221,6 +195,11 @@ def mixColumns(block):
             tmp.append(g)
         words[j] = [i for i in tmp]
         tmp = []
+    for j in words:
+        for i in j:
+            tmp.append(hex(i))
+        print(tmp)
+        tmp = []
     for i in range(4):
         reswords_tmp = []
         reswords_tmp.append(gal_mul_2(words[0][i]) ^ gal_mul_3(words[1][i]) ^ words[2][i] ^ words[3][i])
@@ -228,6 +207,7 @@ def mixColumns(block):
         reswords_tmp.append(words[0][i] ^ words[1][i] ^ gal_mul_2(words[2][i]) ^ gal_mul_3(words[3][i]))
         reswords_tmp.append(gal_mul_3(words[0][i]) ^ words[1][i] ^ words[2][i] ^ gal_mul_2(words[3][i]))
         reswords.append(reswords_tmp)
+        print([hex(i) for i in reswords_tmp])
     #print(reswords)
     block = subblock = 0
     for i in range(4):
@@ -390,3 +370,227 @@ def adjust_last_round(block):
         block <<= 32
         block ^= words[i]
     return block
+
+
+
+
+
+
+def invrotate(a):
+    b = (a & 2**8-1) << 24
+    #print(hex(b))
+    c = (a >> 8)
+    #print(hex(c))
+    return b^c
+
+def invShiftRows(block):
+    words = []
+    wordbytes = []
+    for i in range(0,4):
+        st = 2**32-1
+        g = (block << i*32) 
+        g = (g >> 32*3) & st
+        words.append(g)
+    #print([hex(i) for i in words])
+    for j in range(4):
+        for i in range(4):
+            st = 2**8-1
+            g = (words[j] << i*8) >> 24
+            g = g & st 
+            wordbytes.append(g)
+            #print(words[j],g)
+    
+    #print([hex(i) for i in wordbytes])
+    wordbytes_new = []
+    for i in range(4):
+        for j in range(4):
+            wordbytes_new.append(wordbytes[i+j*4])
+    #print('wordbytes new', [hex(i) for i in wordbytes_new])
+    for i in range(4):
+        words[i] = 0
+        for j in range(4):
+            words[i] <<= 8
+            words[i] ^= wordbytes_new[4*i+j]
+        
+    #print([hex(i) for i in wordbytes_new])    
+    for i in range(4):
+        for j in range(i):
+            #print([hex(i) for i in words])
+            words[i] = invrotate(words[i])
+            #print([hex(i) for i in words])
+    #print([hex(i) for i in words])
+    block = 0
+    for i in range(4):
+        block ^= words[i] << 96 - 32*i
+    return block
+
+
+def invsbox(byte):
+    for i in range(256):
+        test = sbox(i)
+        if test == byte:
+            res = i
+    return res
+
+
+def invSubBytes(block):
+    words = []
+    for i in range(0,4):
+        st = 2**32-1
+        g = (block << i*32) 
+        g = (g >> 32*3) & st
+        words.append(g)
+    wordbytes = []
+    for j in range(4):
+        for i in range(4):
+            st = 2**8-1
+            g = (words[j] << i*8)
+            g = (g >> 8*3) & st
+            wordbytes.append(g)
+    #print([hex(i) for i in wordbytes])
+    for i in range(len(wordbytes)):
+        wordbytes[i] = invsbox(wordbytes[i])
+    #print([hex(i) for i in wordbytes])
+    block = 0
+    chck = 0
+    for i in range(16):
+        shft = wordbytes[i] << (120 - 8*i)
+        chck = chck ^ shft
+        block ^= wordbytes[i] << (120 - 8*i)
+    return block
+
+
+def invMixColumns(block): 
+    words = []
+    reswords = []
+    for i in range(0,4):
+        st = 2**32-1
+        g = (block << i*32) 
+        g = (g >> 32*3) & st
+        words.append(g)
+    tmp = []
+    for j in range(4):
+        for i in range(4):
+            st = 2**8-1
+            g = (words[j] << i*8) 
+            g = (g >> 8*3) & st
+            tmp.append(g)
+        words[j] = [i for i in tmp]
+        tmp = []
+    ########
+    for j in words:
+        for i in j:
+            tmp.append(hex(i))
+        print(tmp)
+        tmp = []
+    ########
+    for i in range(4):
+        reswords_tmp = []
+        reswords_tmp.append(gal_multiply(0x0e, words[0][i]) ^ gal_multiply(0x0b, words[1][i]) ^ gal_multiply(0x0d,words[2][i]) ^ gal_multiply(0x09,words[3][i]))
+        reswords_tmp.append(gal_multiply(0x09, words[0][i]) ^ gal_multiply(0x0e, words[1][i]) ^ gal_multiply(0x0b,words[2][i]) ^ gal_multiply(0x0d,words[3][i]))
+        reswords_tmp.append(gal_multiply(0x0d, words[0][i]) ^ gal_multiply(0x09, words[1][i]) ^ gal_multiply(0x0e,words[2][i]) ^ gal_multiply(0x0b,words[3][i]))
+        reswords_tmp.append(gal_multiply(0x0b, words[0][i]) ^ gal_multiply(0x0d, words[1][i]) ^ gal_multiply(0x09,words[2][i]) ^ gal_multiply(0x0e,words[3][i]))
+        reswords.append(reswords_tmp)
+    #print(reswords)
+    block = subblock = 0
+    for i in range(4):
+        for j in range(4):
+            subblock ^= reswords[i][j] << 24 - 8*j
+        block ^= subblock << 96 - 32*i
+        print(hex(subblock))
+        subblock = 0
+    #print(hex(block))
+    return block
+
+
+def decrypt(source_string, key_string, outfile):
+
+    if source_string[1] == 1:
+        source_string = source_string[0]
+    else:
+        with open(source_string[0], 'rb') as fl:
+            source_string = fl.read()
+    #print(source_string)
+    if key_string[1] == 1:
+        key_string = key_string[0]
+    else:
+        with open(key_string[0], 'r') as fl:
+            key_string = fl.read()
+    key_string = int(hashlib.md5(key_string.encode('utf-8')).hexdigest(), 16)
+    
+    #print(key_string)
+    source_string = source_string.hex()#binascii.hexlify(source_string)
+    #print(source_string, type(source_string))
+    
+    blocks = [int((source_string[32*i:32*i+32]), 16) for i in range(len(source_string)//32)]
+    #print(blocks)
+    
+    
+    ###test###
+    #blocks = [0x69c4e0d86a7b0430d8cdb78070b4c55a]
+    #key_string = 0x000102030405060708090a0b0c0d0e0f
+    ###test###
+
+    NUMROUNDS = 10
+    roundKeys = []
+    blocks_ans = []
+
+    roundKeys = keyExpansion(key_string)
+    print([hex(i) for i in roundKeys])
+    print(hex(roundKeys[0]))
+    for block in blocks:
+        #1 round
+        #print(hex(roundKeys[0]), hex(block))
+        block = addRoundKey(roundKeys[-1],block)
+        print(hex(block))
+        #rounds 2-9
+        for i in range(1, NUMROUNDS):
+            print(hex(block), 'start?')
+            block = invShiftRows(block)
+            print(i, hex(block))
+
+            block = invSubBytes(block)
+            print(i, hex(block))
+
+            block = adjust_last_round(block)
+
+            block = addRoundKey(roundKeys[-1-i],block)
+            print(i, hex(block), 'after addr')
+
+            block = adjust_last_round(block)
+            print(i, hex(block), 'try rotate')
+
+            block = invMixColumns(block)
+            print(i, hex(block))
+            
+        #last round
+        block = invSubBytes(block)
+        print('last r', hex(block))
+        block = invShiftRows(block)
+        print('last r', hex(block))
+        ##adjusting bytes
+        block = adjust_last_round(block)
+        print('last r', hex(block))
+        block = addRoundKey(roundKeys[0], block)
+        print('last r', hex(block))
+        blocks_ans.append(block)
+    
+    print([hex(i) for i in blocks_ans])
+    # print(len(blocks), len(blocks_ans))
+    shifted_zeroes = blocks_ans.pop(-1)
+    print(shifted_zeroes)
+    print([hex(i) for i in blocks_ans])
+    blocks_ans[-1] = int(hex(blocks_ans[-1])[:-shifted_zeroes], 16)
+    print([hex(i) for i in blocks_ans])
+    out_string = ''
+    if outfile != 0:
+        with open(outfile, 'wb') as outfile:
+            for i in blocks_ans:
+                len_bytes = (len(hex(i)) - 2) // 2
+                print(len_bytes, hex(i))
+                outfile.write(i.to_bytes(len_bytes, 'big'))
+    else:
+        print(out_string)
+        print("You need to specify outfiles!")
+
+    return 0
