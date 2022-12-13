@@ -35,7 +35,6 @@ def encrypt(source_string, key_string, outfile):
             
         if slc != '':
             blocks.append(int(slc, 16))
-
     blocks[-1] = hex(blocks[-1])
     len_last = len(blocks[-1])
     cnt = 0
@@ -46,7 +45,6 @@ def encrypt(source_string, key_string, outfile):
         len_last = len(blocks[-1])
     blocks[-1] = int(blocks[-1], 16)
     blocks.append(cnt)
-
     NUMROUNDS = 10
     roundKeys = []
     blocks_ans = []
@@ -86,7 +84,6 @@ def encrypt(source_string, key_string, outfile):
         blocks_ans.append(block)
         blnum += 1
         print(round(blnum/len(blocks), 3))
-
     out_string = ''
     if outfile != 0:
         with open(outfile, 'wb') as outfile:
@@ -517,8 +514,16 @@ def decrypt(source_string, key_string, outfile):
     key_string = int(hashlib.md5(key_string.encode('utf-8')).hexdigest(), 16)
 
     source_string = source_string.hex()
-    blocks = [int((source_string[32*i:32*i+32]), 16) for i in range(len(source_string)//32)]
-
+    blocks = []
+    
+    for i in range(len(source_string)//32+1):
+        slc = source_string[32*i:32*i+32]
+        
+        if i == len(source_string)//32+1:
+            slc = source_string[32*i:]
+            
+        if slc != '':
+            blocks.append(int(slc, 16))
     invsbox = invsboxgen()
 
     NUMROUNDS = 10
@@ -564,10 +569,12 @@ def decrypt(source_string, key_string, outfile):
         print(round(cnt/lenbl, 3))
 
     shifted_zeroes = blocks_ans.pop(-1)
-
-    if shifted_zeroes != 0:
-        blocks_ans[-1] = int(hex(blocks_ans[-1])[:-shifted_zeroes], 16)
     
+    if shifted_zeroes != 0:
+        if hex(blocks_ans[-1]) == '0x0':
+            blocks_ans[-1] = int((hex(blocks_ans[-1])+'0'*31)[:-shifted_zeroes], 16)
+        else:
+            blocks_ans[-1] = int(hex(blocks_ans[-1])[:-shifted_zeroes], 16)
     if outfile != 0:
         with open(outfile, 'wb') as outfile:
             for i in range(len(blocks_ans)-1):
