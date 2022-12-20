@@ -33,8 +33,8 @@ def encrypt(source_string, key_string, outfile):
     #print('start bin', bin_str)
     bin_blocks = []
     ##test
-    # n = 9173503
-    # e = 3
+    # n = 26745475138272326665571528269272188086186709795747103505080525569912375504296909718120540410009324249310934073066414405543088621232185553897148743964010006913207564430655901997367299362802551320676155053237899167694027545908671893829442952075518510518154361518202424126502309316440638573529190495603308306197330660740827488303010883475390605821329712793997286532800168152497399881402064215295895138014153568451044493036618741016712150389513859781367191579427518672705453957782259245727268547063177911172691057600334333273778663577217285520232067866634027743156366389661049321144194653577114283389021364074743528572273
+    # e = 47
     ##test
 
     lenbl1 = math.floor(math.log2(n))
@@ -55,6 +55,8 @@ def encrypt(source_string, key_string, outfile):
     #print('encr bin', bin_encr, len(bin_encr), lenbl2)
     hex_encr = hex(int(bin_encr,2))
     #print('encr hex', hex_encr, len(hex_encr))
+    if len(hex_encr) % 2 != 0:
+        hex_encr = hex_encr[:2]+'0'+hex_encr[2:]
     hex_encr_bytes = bytes.fromhex(hex_encr[2:])
     #print(hex_encr_bytes)
     
@@ -74,24 +76,16 @@ def decrypt(source_string, key_string, outfile):
     else:
         with open(source_string[0], 'rb') as fl:
             source_string = fl.read()
-    #print(source_string)
     source_string = source_string.hex()
-    #print("hex read: ", source_string)
     with open(f"{key_string[0]}", 'r') as file:
         ksfl = file.read().split(':')
         d, n = int(ksfl[0]), int(ksfl[1])
 
-    
     lenbl2 = math.floor(math.log2(n)) + 1
-    #print(lenbl)
     int_src_str = int(source_string, 16)
-    #print(int_src_str)
     hex_str_len = len(source_string)
 
     bin_src_str = bin(int_src_str)[2:].zfill(((hex_str_len + 1) // 2) * 8).zfill(lenbl2)
-    #print('bin read', bin_src_str, len(bin_src_str), lenbl2)
-    #ДОСЮДА ВСЁ ЗАЕБИСЬ
-
     
     bin_blocks = []
     for i in range(len(bin_src_str)//lenbl2):
@@ -99,24 +93,16 @@ def decrypt(source_string, key_string, outfile):
     
     lenbl1 = math.floor(math.log2(n))
     powers_blocks = [pwrfast(int(i, 2), d, n) for i in bin_blocks]
-    #print([(bin(i)[2:].zfill(lenbl1+1), len(bin(i)[2:].zfill(lenbl1+1))) for i in powers_blocks], len(powers_blocks))
-    #print([(bin(i)[2:].zfill(lenbl1), len(bin(i)[2:].zfill(lenbl1))) for i in powers_blocks])
     bin_str = ''.join([bin(i)[2:].zfill(lenbl1) for i in powers_blocks])
-    #print(bin_str)
     
     int_str = int(bin_str, 2)
-    #print(int_str)
     hex_str_len = len(hex(int_str)[2:])
-    #print(hex_str_len % 2)
     if hex_str_len % 2 != 0:
         hex_str = '0' + hex(int_str)[2:]
     else:
         hex_str = hex(int_str)[2:]
-    #print(hex_str)
-    ##print(hex_str, len(hex_str))
     bytes_hex = bytes.fromhex(hex_str)
 
-    #print(bin_blocks)
 
     out_string = ''
     if outfile != 0:
@@ -132,11 +118,11 @@ def genkeypair():
     e, p, q = genpublickey()
     euler_val = (p-1)*(q-1)
     n = p*q
-    with open('public_key.rssaka', 'w') as fl:
+    with open('public_key.rsakey', 'w') as fl:
         fl.write(str(e)+':'+str(n))
         print('Public key: ', e, n)
     d = genprivatekey(n, euler_val, e)
-    with open('private_key.rssaka', 'w') as fl:
+    with open('private_key.rsakey', 'w') as fl:
         fl.write(str(d)+':'+str(n))
         print('Private key:', d, n)
     
@@ -150,8 +136,9 @@ def genkeypair():
 
 
 def genpublickey():
-    p, q = rsa_primepair()
-    encr_exponent = 13 ###//TODO: change exponent to be the chosen value
+    length = int(input("enter the bit length of n\n")) // 2
+    p, q = rsa_primepair(length)
+    encr_exponent = 13#int(input("enter encryption exponent\n")) ###//TODO: change exponent to be the chosen value
     euler_val = (p-1)*(q-1)
     while not is_coprime(euler_val, encr_exponent):
         p, q = rsa_primepair()
@@ -168,8 +155,8 @@ def genprivatekey(n, euler_val, encr_exponent):
     return decr_exponent
 
 
-def rsa_primepair():
-    p, q = genPrime(), genPrime()
+def rsa_primepair(len):
+    p, q = genPrime(len), genPrime(len)
     return p, q
 
 
